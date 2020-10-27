@@ -8,3 +8,6 @@ edition = "2018"
 
 [dependencies]
 piston_window = "0.98"
+num = "0.3.0"
+prisma = "0.1.1"
+angular-units = "0.2.4"

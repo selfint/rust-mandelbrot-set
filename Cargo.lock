@@ -42,6 +42,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "000444226fcff248f2bc4c7625be32c63caccfecc2723a2b9f78a7487a49c407"
 
 [[package]]
+name = "angular-units"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f1c36cde4b75aa8518ad38880fdc7b649d7bf22b359a296964756e2319d598d"
+dependencies = [
+ "approx",
+ "num-traits",
+]
+
+[[package]]
 name = "approx"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -465,7 +475,7 @@ dependencies = [
  "jpeg-decoder",
  "lzw",
  "num-iter",
- "num-rational",
+ "num-rational 0.2.4",
  "num-traits",
  "png",
  "scoped_threadpool",
@@ -578,7 +588,10 @@ dependencies = [
 name = "mandelbrot-visualization"
 version = "0.1.0"
 dependencies = [
+ "angular-units",
+ "num",
  "piston_window",
+ "prisma",
 ]
 
 [[package]]
@@ -630,6 +643,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "num"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab3e176191bc4faad357e3122c4747aa098ac880e88b168f106386128736cf4a"
+dependencies = [
+ "num-bigint",
+ "num-complex",
+ "num-integer",
+ "num-iter",
+ "num-rational 0.3.0",
+ "num-traits",
+]
+
+[[package]]
+name = "num-bigint"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7f3fc75e3697059fb1bc465e3d8cca6cf92f56854f201158b3f9c77d5a3cfa0"
+dependencies = [
+ "autocfg 1.0.1",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
+name = "num-complex"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b05ad05bd8977050b171b3f6b48175fea6e0565b7981059b486075e1026a9fb5"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "num-derive"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -668,6 +715,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c000134b5dbf44adc5cb772486d335293351644b801551abe8f75c84cfa4aef"
 dependencies = [
  "autocfg 1.0.1",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
+name = "num-rational"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5b4d7360f362cfb50dde8143501e6940b22f644be75a4cc90b2d81968908138"
+dependencies = [
+ "autocfg 1.0.1",
+ "num-bigint",
  "num-integer",
  "num-traits",
 ]
@@ -924,6 +983,17 @@ dependencies = [
  "deflate",
  "inflate",
  "num-iter",
+]
+
+[[package]]
+name = "prisma"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5640533116b656900156ef15e22d3789edb9a71f36ec04a2678a307be243495"
+dependencies = [
+ "angular-units",
+ "approx",
+ "num-traits",
 ]
 
 [[package]]
