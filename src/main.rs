@@ -21,12 +21,11 @@ fn main() {
         .build()
         .unwrap();
 
-    let real_offset = -0.75;
-    let imaginary_offset = 0.1;
-    let iterations = 128;
+    let real_offset = -1.747998410993740817490024831;
+    let imaginary_offset = -0.000000000000001657124692954;
+    let iterations = 512;
     let mut zoom = 100.0;
     while let Some(event) = window.next() {
-        zoom *= 2.0;
         window.draw_2d(&event, |context, graphics, _device| {
             const BLACK: [f32; 4] = [0.0; 4];
             clear(BLACK, graphics);
@@ -47,6 +46,8 @@ fn main() {
                 }
             }
         });
+
+        zoom += 100.0;
     }
 }
 
