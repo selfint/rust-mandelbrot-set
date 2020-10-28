@@ -1,5 +1,5 @@
 use angular_units::Deg;
-use num::complex::{Complex32, Complex64};
+use num::complex::Complex32;
 use piston_window::*;
 use prisma::{Color, FromColor, Hsl, Rgb};
 
