@@ -1,83 +1,76 @@
-use angular_units::Deg;
-use num::complex::Complex32;
-use piston_window::*;
-use prisma::{Color, FromColor, Hsl, Rgb};
+mod mandelbrot;
 
-fn steps_in_mandelbrot(n: &Complex32, iterations: &u64) -> u64 {
-    let mut temp = n.clone();
-    for iteration in 0..*iterations {
-        temp = temp.powu(2) + n;
-        if temp.norm() > 2.0 {
-            return iteration + 1;
-        }
+use mandelbrot::Frame;
+
+use glutin_window::GlutinWindow as Window;
+use opengl_graphics::{GlGraphics, OpenGL};
+use piston::event_loop::{EventSettings, Events};
+use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
+use piston::window::WindowSettings;
+
+pub struct App {
+    gl: GlGraphics, // OpenGL drawing backend.
+    frame: Frame
+}
+
+impl App {
+    fn render(&mut self, args: &RenderArgs) {
+        use graphics::*;
+
+        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+
+        let square = rectangle::square(0.0, 0.0, 50.0);
+        let rotation = self.rotation;
+        let (x, y) = (args.window_size[0] / 2.0, args.window_size[1] / 2.0);
+
+        self.gl.draw(args.viewport(), |c, gl| {
+            // Clear the screen.
+            clear(GREEN, gl);
+
+            let transform = c
+                .transform
+                .trans(x, y)
+                .rot_rad(rotation)
+                .trans(-25.0, -25.0);
+
+            // Draw a box rotating around the middle of the screen.
+            rectangle(RED, square, transform, gl);
+        });
     }
 
-    0
+    fn update(&mut self, args: &UpdateArgs) {
+        // Rotate 2 radians per second.
+        self.rotation += 2.0 * args.dt;
+    }
 }
 
 fn main() {
-    let mut window: PistonWindow = WindowSettings::new("Hello Piston!", [400, 400])
+    // Change this to OpenGL::V2_1 if not working.
+    let opengl = OpenGL::V3_2;
+
+    // Create an Glutin window.
+    let mut window: Window = WindowSettings::new("spinning-square", [200, 200])
+        .graphics_api(opengl)
         .exit_on_esc(true)
         .build()
         .unwrap();
 
-    let real_offset = -1.747998410993740817490024831;
-    let imaginary_offset = -0.000000000000001657124692954;
-    let iterations = 512;
-    let mut zoom = 100.0;
-    while let Some(event) = window.next() {
-        window.draw_2d(&event, |context, graphics, _device| {
-            const BLACK: [f32; 4] = [0.0; 4];
-            clear(BLACK, graphics);
-            for real in -200..200 {
-                let real = real as f32;
-                for imaginary in -200..200 {
-                    let imaginary = imaginary as f32;
-                    draw_pixel(
-                        &real,
-                        &imaginary,
-                        &real_offset,
-                        &imaginary_offset,
-                        &iterations,
-                        &zoom,
-                        context,
-                        graphics,
-                    );
-                }
-            }
-        });
+    // Create a new game and run it.
+    let mut app = App {
+        gl: GlGraphics::new(opengl),
+        rotation: 0.0,
+    };
 
-        zoom += 100.0;
+    let mut events = Events::new(EventSettings::new());
+    while let Some(e) = events.next(&mut window) {
+        if let Some(args) = e.render_args() {
+            app.render(&args);
+        }
+
+        if let Some(args) = e.update_args() {
+            app.update(&args);
+        }
     }
 }
 
-fn draw_pixel(
-    real: &f32,
-    imaginary: &f32,
-    real_offset: &f32,
-    imaginary_offset: &f32,
-    iterations: &u64,
-    zoom: &f32,
-    context: Context,
-    graphics: &mut G2d,
-) {
-    let steps = steps_in_mandelbrot(
-        &Complex32::new(
-            real / zoom + real_offset,
-            imaginary / zoom + imaginary_offset,
-        ),
-        iterations,
-    );
-    let hsl = Hsl::new(
-        Deg(360.0 * ((steps as f32) / (*iterations as f32)) % 360.0),
-        0.8,
-        0.8,
-    );
-    let (r, g, b) = Rgb::from_color(&hsl).to_tuple();
-    let mut color = [r as f32, g as f32, b as f32, 1.0];
-    let rect: [f64; 4] = [*real as f64 + 200.0, *imaginary as f64 + 200.0, 1.0, 1.0];
-    if steps == 0 {
-        color = [0.0; 4];
-    }
-    rectangle(color, rect, context.transform, graphics);
-}
