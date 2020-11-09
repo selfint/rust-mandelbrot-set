@@ -2,14 +2,14 @@ use angular_units::Deg;
 use num::complex::Complex64;
 
 pub struct Frame {
-    step_fractions: Vec<Vec<f64>>,
+    pub step_fractions: Vec<Vec<f64>>,
 }
 
 pub struct ZoomLocation {
-    re: f64,
-    im: f64,
-    zoom: f64,
-    iterations: u64,
+    pub re: f64,
+    pub im: f64,
+    pub zoom: f64,
+    pub iterations: u64,
 }
 
 fn step_fraction_in_mandelbrot(n: &Complex64, iterations: &u64) -> f64 {
