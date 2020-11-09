@@ -32,8 +32,8 @@ pub fn generate_frame(zl: &ZoomLocation, window_size: &(f64, f64)) -> Frame {
     for row in -rows..rows {
         let mut row_step_fractions = vec![];
         for col in -columns..columns {
-            let re = (row as f64) / zl.zoom;
-            let im = (col as f64) / zl.zoom;
+            let re = zl.re + (row as f64) / zl.zoom;
+            let im = zl.im + (col as f64) / zl.zoom;
             let n = Complex64::new(re, im);
             let step_fraction = step_fraction_in_mandelbrot(&n, &zl.iterations);
             row_step_fractions.push(step_fraction);

@@ -22,6 +22,7 @@ impl App {
         let window_size = (x, y);
         const BACKGROUND: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
         let frame = mandelbrot::generate_frame(&self.zl, &window_size);
+        self.zl.zoom *= 2.0;
 
         self.gl.draw(args.viewport(), |c, gl| {
             clear(BACKGROUND, gl);
@@ -75,7 +76,7 @@ fn main() {
         re: -1.74999841099374081749002,
         im: -0.00000000000000165712469,
         zoom: 100.0,
-        iterations: 128,
+        iterations: 4196,
     };
     let gl = GlGraphics::new(opengl);
     let mut app = App { gl, zl };
