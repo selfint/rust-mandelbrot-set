@@ -24,10 +24,10 @@ fn step_fraction_in_mandelbrot(n: &Complex64, iterations: &u64) -> f64 {
     0.0
 }
 
-pub fn generate_frame(zl: &ZoomLocation, window_size: &(f64, f64)) -> Frame {
+pub fn generate_frame(zl: &ZoomLocation, window_size: &[f64; 2]) -> Frame {
     let mut step_fractions = vec![];
-    let columns = window_size.0 as i64;
-    let rows = window_size.1 as i64;
+    let columns = window_size[0] as i64;
+    let rows = window_size[1] as i64;
 
     for row in -rows..rows {
         let mut row_step_fractions = vec![];

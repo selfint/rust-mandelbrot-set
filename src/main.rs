@@ -1,6 +1,7 @@
 mod mandelbrot;
 
 use mandelbrot::{Frame, ZoomLocation};
+use std::time::{Duration, Instant};
 
 use angular_units::Deg;
 use glutin_window::GlutinWindow as Window;
@@ -18,20 +19,23 @@ pub struct App {
 
 impl App {
     fn render(&mut self, args: &RenderArgs) {
-        let (x, y) = (args.window_size[0] / 2.0, args.window_size[1] / 2.0);
-        let window_size = (x, y);
-        const BACKGROUND: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
-        let frame = mandelbrot::generate_frame(&self.zl, &window_size);
-        self.zl.zoom *= 2.0;
+        let frame_start = Instant::now();
+        let frame = mandelbrot::generate_frame(&self.zl, &args.window_size);
+        let frame_duration = frame_start.elapsed();
+        println!("Frame generated in {:?}", frame_duration);
 
+        let draw_start = Instant::now();
         self.gl.draw(args.viewport(), |c, gl| {
-            clear(BACKGROUND, gl);
-
+            clear([0.0, 0.0, 0.0, 0.0], gl);
             render_frame(frame, c, gl);
         });
+        let draw_duration = draw_start.elapsed();
+        println!("Frame render in {:?}", draw_duration);
     }
 
-    fn update(&mut self, args: &UpdateArgs) {}
+    fn update(&mut self, args: &UpdateArgs) {
+        self.zl.zoom *= 2.0;
+    }
 }
 
 fn render_frame(f: Frame, c: Context, gl: &mut GlGraphics) {
@@ -41,14 +45,19 @@ fn render_frame(f: Frame, c: Context, gl: &mut GlGraphics) {
                 continue;
             }
 
-            let deg = 360.0 - ((360.0 * step_fraction) % 359.0);
-            let hsl = Hsl::new(Deg(deg), 0.8, 0.8);
-            let (r, g, b) = Rgb::from_color(&hsl).to_tuple();
-            let color = [r, g, b, 1.0];
+            let color = get_step_fraction_color(step_fraction);
 
             draw_pixel(row as f64, col as f64, color, c, gl);
         }
     }
+}
+
+fn get_step_fraction_color(step_fraction: &f64) -> [f32; 4] {
+    let deg = 360.0 - ((360.0 * step_fraction) % 359.0);
+    let hsl = Hsl::new(Deg(deg), 0.8, 0.8);
+    let (r, g, b) = Rgb::from_color(&hsl).to_tuple();
+    let color = [r, g, b, 1.0];
+    color
 }
 
 fn draw_pixel(x: f64, y: f64, color: [f32; 4], c: Context, gl: &mut GlGraphics) {
