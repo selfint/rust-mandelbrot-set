@@ -1,5 +1,7 @@
 use angular_units::Deg;
 use num::complex::Complex64;
+use std::sync::mpsc::{channel, RecvError};
+use threadpool::ThreadPool;
 
 pub struct Frame {
     pub step_fractions: Vec<Vec<f64>>,
@@ -43,4 +45,26 @@ pub fn generate_frame(zl: &ZoomLocation, window_size: &[f64; 2]) -> Frame {
     }
 
     Frame { step_fractions }
+}
+
+pub fn generate_frame_parallel(zl: &ZoomLocation, window_size: &[f64; 2]) -> Frame {
+    let pool = ThreadPool::new(num_cpus::get());
+    let (tx, rx) = channel();
+
+    for y in 0..height {
+        let tx = tx.clone();
+        pool.execute(move || {
+            for x in 0..width {
+                let i = julia(c, x, y, width, height, iterations);
+                let pixel = wavelength_to_rgb(380 + i * 400 / iterations);
+                tx.send((x, y, pixel)).expect("Could not send data!");
+            }
+        });
+    }
+
+    for _ in 0..(width * height) {
+        let (x, y, pixel) = rx.recv()?;
+        img.put_pixel(x, y, pixel);
+    }
+    let _ = img.save("output.png")?;
 }
