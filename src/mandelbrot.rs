@@ -1,9 +1,15 @@
 use angular_units::Deg;
 use num::complex::Complex64;
 
-
 pub struct Frame {
-    
+    step_fractions: Vec<Vec<f64>>,
+}
+
+pub struct ZoomLocation {
+    re: f64,
+    im: f64,
+    zoom: f64,
+    iterations: u64,
 }
 
 fn step_fraction_in_mandelbrot(n: &Complex64, iterations: &u64) -> f64 {
@@ -18,3 +24,23 @@ fn step_fraction_in_mandelbrot(n: &Complex64, iterations: &u64) -> f64 {
     0.0
 }
 
+pub fn generate_frame(zl: &ZoomLocation, window_size: &(f64, f64)) -> Frame {
+    let mut step_fractions = vec![];
+    let columns = window_size.0 as i64;
+    let rows = window_size.1 as i64;
+
+    for row in -rows..rows {
+        let mut row_step_fractions = vec![];
+        for col in -columns..columns {
+            let re = (row as f64) / zl.zoom;
+            let im = (col as f64) / zl.zoom;
+            let n = Complex64::new(re, im);
+            let step_fraction = step_fraction_in_mandelbrot(&n, &zl.iterations);
+            row_step_fractions.push(step_fraction);
+        }
+
+        step_fractions.push(row_step_fractions);
+    }
+
+    Frame { step_fractions }
+}
