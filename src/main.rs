@@ -1,17 +1,18 @@
-mod mandelbrot;
-
-use mandelbrot::{Frame, ZoomLocation};
 use std::time::{Duration, Instant};
 
 use angular_units::Deg;
 use glutin_window::GlutinWindow as Window;
+use graphics::*;
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
 use piston::window::WindowSettings;
 use prisma::{Color, FromColor, Hsl, Rgb};
 
-use graphics::*;
+use mandelbrot::{Frame, ZoomLocation};
+
+mod mandelbrot;
+
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     zl: ZoomLocation,
