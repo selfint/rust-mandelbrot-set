@@ -21,7 +21,7 @@ pub struct App {
 impl App {
     fn render(&mut self, args: &RenderArgs) {
         let frame_start = Instant::now();
-        let frame = mandelbrot::generate_frame(&self.zl, &args.window_size);
+        let frame = mandelbrot::generate_frame_parallel(self.zl, &args.window_size);
         let frame_duration = frame_start.elapsed();
         println!("Frame generated in {:?}", frame_duration);
 

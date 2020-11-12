@@ -572,6 +572,7 @@ version = "0.2.0"
 dependencies = [
  "angular-units",
  "num",
+ "num_cpus",
  "piston",
  "piston2d-graphics",
  "piston2d-opengl_graphics",
