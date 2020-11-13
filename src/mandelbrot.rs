@@ -30,8 +30,8 @@ fn step_fraction_in_mandelbrot(n: &Complex64, iterations: &u64) -> f64 {
 
 pub fn generate_frame(zl: ZoomLocation, window_size: &[f64; 2]) -> Frame {
     let mut step_fractions = vec![];
-    let columns = window_size[0] as i64;
-    let rows = window_size[1] as i64;
+    let rows = (window_size[0] / 2.0) as i64;
+    let columns = (window_size[1] / 2.0) as i64;
 
     for row in -rows..rows {
         let mut row_step_fractions = vec![];
@@ -50,9 +50,29 @@ pub fn generate_frame(zl: ZoomLocation, window_size: &[f64; 2]) -> Frame {
 }
 
 pub fn generate_frame_parallel(zl: ZoomLocation, window_size: &[f64; 2]) -> Frame {
-    let rows = window_size[0] as i64;
-    let columns = window_size[1] as i64;
-    let mut step_fractions = HashMap::new();
+    let rows = (window_size[0] / 2.0) as i64;
+    let columns = (window_size[1] / 2.0) as i64;
+    let mut step_fractions = vec![];
+    for _ in -rows..rows {
+        let mut step_fraction_row = vec![];
+        for _ in -columns..columns {
+            step_fraction_row.push(0.0);
+        }
+
+        step_fractions.push(step_fraction_row);
+    }
+
+    calc_step_fractions_parallel(zl, rows, columns, &mut step_fractions);
+
+    Frame { step_fractions }
+}
+
+fn calc_step_fractions_parallel(
+    zl: ZoomLocation,
+    rows: i64,
+    columns: i64,
+    buffer: &mut Vec<Vec<f64>>,
+) {
     let pool = ThreadPool::new(num_cpus::get());
     let (tx, rx) = channel();
 
@@ -64,7 +84,7 @@ pub fn generate_frame_parallel(zl: ZoomLocation, window_size: &[f64; 2]) -> Fram
                 let im = zl.im + (col as f64) / zl.zoom;
                 let n = Complex64::new(re, im);
                 let step_fraction = step_fraction_in_mandelbrot(&n, &zl.iterations);
-                tx.send((row, col, step_fraction))
+                tx.send((row + rows, col + columns, step_fraction))
                     .expect("Could not send data!");
             }
         });
@@ -73,20 +93,6 @@ pub fn generate_frame_parallel(zl: ZoomLocation, window_size: &[f64; 2]) -> Fram
     for _ in 0..(rows * 2 * columns * 2) {
         let (row, col, step_fraction) = rx.recv().unwrap();
 
-        step_fractions.insert((row, col), step_fraction);
-    }
-
-    let mut fractions = vec![];
-    for row in -rows..rows {
-        let mut row_fractions = vec![];
-        for col in -columns..columns {
-            row_fractions.push(*step_fractions.get(&(row, col)).unwrap());
-        }
-
-        fractions.push(row_fractions);
-    }
-
-    Frame {
-        step_fractions: fractions,
+        buffer[row as usize][col as usize] = step_fraction;
     }
 }
