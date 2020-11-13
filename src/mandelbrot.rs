@@ -1,11 +1,15 @@
 use angular_units::Deg;
 use num::complex::Complex64;
-use std::collections::HashMap;
-use std::sync::mpsc::{channel, RecvError};
+use prisma::{Color, FromColor, Hsl, Rgb};
+use std::sync::mpsc::channel;
 use threadpool::ThreadPool;
 
 pub struct Frame {
     pub step_fractions: Vec<Vec<f64>>,
+}
+
+pub struct RgbFrame {
+    pub pixels: Vec<Vec<Option<[f32; 4]>>>,
 }
 
 #[derive(Clone, Copy)]
@@ -49,29 +53,29 @@ pub fn generate_frame(zl: ZoomLocation, window_size: &[f64; 2]) -> Frame {
     Frame { step_fractions }
 }
 
-pub fn generate_frame_parallel(zl: ZoomLocation, window_size: &[f64; 2]) -> Frame {
+pub fn generate_rgb_frame_parallel(zl: ZoomLocation, window_size: &[f64; 2]) -> RgbFrame {
     let rows = (window_size[0] / 2.0) as i64;
     let columns = (window_size[1] / 2.0) as i64;
-    let mut step_fractions = vec![];
+    let mut pixels = vec![];
     for _ in -rows..rows {
         let mut step_fraction_row = vec![];
         for _ in -columns..columns {
-            step_fraction_row.push(0.0);
+            step_fraction_row.push(None);
         }
 
-        step_fractions.push(step_fraction_row);
+        pixels.push(step_fraction_row);
     }
 
-    calc_step_fractions_parallel(zl, rows, columns, &mut step_fractions);
+    calc_rgb_parallel(zl, rows, columns, &mut pixels);
 
-    Frame { step_fractions }
+    RgbFrame { pixels }
 }
 
-fn calc_step_fractions_parallel(
+fn calc_rgb_parallel(
     zl: ZoomLocation,
     rows: i64,
     columns: i64,
-    buffer: &mut Vec<Vec<f64>>,
+    buffer: &mut Vec<Vec<Option<[f32; 4]>>>,
 ) {
     let pool = ThreadPool::new(num_cpus::get());
     let (tx, rx) = channel();
@@ -80,16 +84,34 @@ fn calc_step_fractions_parallel(
         let tx = tx.clone();
         pool.execute(move || {
             for col in -columns..columns {
+                let pixel_row = row + rows;
+                let pixel_col = col + columns;
                 let re = zl.re + (row as f64) / zl.zoom;
                 let im = zl.im + (col as f64) / zl.zoom;
                 let n = Complex64::new(re, im);
                 let step_fraction = step_fraction_in_mandelbrot(&n, &zl.iterations);
-                tx.send((row + rows, col + columns, step_fraction))
-                    .expect("Could not send data!");
+                if step_fraction > 0.0 {
+                    let deg = 359.0 - ((360.0 * step_fraction) % 359.0);
+                    let hsl = Hsl::new(Deg(deg), 0.8, 0.8);
+                    let (r, g, b) = Rgb::from_color(&hsl).to_tuple();
+
+                    tx.send((pixel_row, pixel_col, Some([r, g, b, 1.0])))
+                        .expect(&format!(
+                            "Failed to send Some pixel at {} {}",
+                            pixel_row, pixel_col
+                        ));
+                } else {
+                    tx.send((pixel_row, pixel_col, None)).expect(&format!(
+                        "Failed to send None pixel at {} {}",
+                        pixel_row, pixel_col
+                    ));
+                }
             }
         });
     }
 
+    // we can limit the processing time and stop receiving pixels
+    // after X seconds to speed up rendering!
     for _ in 0..(rows * 2 * columns * 2) {
         let (row, col, step_fraction) = rx.recv().unwrap();
 
